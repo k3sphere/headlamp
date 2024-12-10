@@ -17,12 +17,13 @@ import store from '../../redux/stores/store';
 import { fetchStatelessClusterKubeConfigs, isEqualClusterConfigs } from '../../stateless/';
 import ActionsNotifier from '../common/ActionsNotifier';
 import AlertNotification from '../common/AlertNotification';
+import DetailsDrawer from '../DetailsDrawer/DetailsDrawer';
 import Sidebar, { NavigationTabs } from '../Sidebar';
 import RouteSwitcher from './RouteSwitcher';
 import TopBar from './TopBar';
 import VersionDialog from './VersionDialog';
 
-export interface LayoutProps {}
+export interface LayoutProps { }
 
 const CLUSTER_FETCH_INTERVAL = 10 * 1000; // ms
 
@@ -95,7 +96,7 @@ function mergeClusterConfigs(
   return mergedClusters;
 }
 
-export default function Layout({}: LayoutProps) {
+export default function Layout({ }: LayoutProps) {
   const arePluginsLoaded = useTypedSelector(state => state.plugins.loaded);
   const dispatch = useDispatch();
   const clusters = useTypedSelector(state => state.config.clusters);
@@ -254,6 +255,7 @@ export default function Layout({}: LayoutProps) {
               </Container>
             </Box>
           </Main>
+          <DetailsDrawer />
         </Box>
       </Box>
     </>
