@@ -10,8 +10,18 @@ import { useTranslation } from 'react-i18next';
 import { DialogTitle } from './Dialog';
 
 export interface ConfirmDialogProps extends MuiDialogProps {
+  /**
+   * Title of the dialog box
+   */
   title: string;
+  /**
+   * Description of the dialog box
+   */
   description: string | React.ReactNode;
+  /*
+   * Description of the checkbox
+   * Note: If this is provided, an additional description will be rendered under the original and will require the checkbox to continue action.
+   */
   checkboxDescription?: string;
   onConfirm: () => void;
   handleClose: () => void;
