@@ -116,7 +116,6 @@ export const pluginsSlice = createSlice({
         isEnabled: p.isEnabled,
       }));
       state.pluginSettings = pluginInfo;
-      console.log('LOCAL SAVE', pluginInfo);
       localStorage.setItem('headlampPluginSettings', JSON.stringify(pluginInfo));
     },
     /** Reloads the browser page */

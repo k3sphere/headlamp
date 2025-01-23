@@ -67,7 +67,7 @@ export async function getPlugins(pluginSettings: { name: string; isEnabled?: boo
   return pluginsWithIsEnabled;
 }
 
-export function usePlugins(pluginSettings: { name: string; isEnabled: boolean }[]) {
+export function usePlugins(pluginSettings: { name: string; isEnabled?: boolean }[]) {
   // takes two params, the key and the function that will be called to get the data
   return useQuery({ queryKey: ['plugins'], queryFn: () => getPlugins(pluginSettings) });
 }
