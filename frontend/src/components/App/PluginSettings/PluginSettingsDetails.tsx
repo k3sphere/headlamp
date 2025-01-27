@@ -71,13 +71,9 @@ export default function PluginSettingsDetails() {
   const pluginSettings = useTypedSelector(state => state.plugins.pluginSettings);
   const { data: plugins } = usePlugins(pluginSettings);
 
-  if (!plugins?.length) {
-    return null;
-  }
-
   const plugin = useMemo(() => {
     const decodedName = decodeURIComponent(name);
-    return plugins.find((plugin: PluginInfo) => plugin.name === decodedName);
+    return plugins?.find((plugin: PluginInfo) => plugin.name === decodedName);
   }, [plugins, name]);
 
   if (!plugin) {

@@ -2,7 +2,7 @@ import '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import semver from 'semver';
 import helpers from '../../../../helpers';
-import { PluginInfo } from '../../../../plugin/pluginsSlice';
+import { PluginInfo, PluginSettings } from '../../../../plugin/pluginsSlice';
 import { backendFetch } from './fetch';
 
 /*
@@ -11,7 +11,7 @@ import { backendFetch } from './fetch';
  * - it will also do a compatibility check for the plugins and return the plugins with their compatibility status,
  * - the compatibility check is needed to render the plugin switches
  */
-export async function getPlugins(pluginSettings: { name: string; isEnabled?: boolean }[]) {
+export async function getPlugins(pluginSettings: PluginSettings[]) {
   const pluginPaths = (await fetch(`${helpers.getAppUrl()}plugins`).then(resp =>
     resp.json()
   )) as string[];
@@ -26,9 +26,9 @@ export async function getPlugins(pluginSettings: { name: string; isEnabled?: boo
 
           console.warn(
             'Missing package.json. ' +
-            `Please upgrade the plugin ${path}` +
-            ' by running "headlamp-plugin extract" again.' +
-            ' Please use headlamp-plugin >= 0.8.0'
+              `Please upgrade the plugin ${path}` +
+              ' by running "headlamp-plugin extract" again.' +
+              ' Please use headlamp-plugin >= 0.8.0'
           );
 
           return {
@@ -57,6 +57,9 @@ export async function getPlugins(pluginSettings: { name: string; isEnabled?: boo
 
       return {
         ...plugin,
+        settingsComponent: matchedSetting.settingsComponent,
+        displaySettingsComponentWithSaveButton:
+          matchedSetting.displaySettingsComponentWithSaveButton,
         isEnabled: matchedSetting.isEnabled,
         isCompatible: isCompatible,
       };
@@ -67,7 +70,7 @@ export async function getPlugins(pluginSettings: { name: string; isEnabled?: boo
   return pluginsWithIsEnabled;
 }
 
-export function usePlugins(pluginSettings: { name: string; isEnabled?: boolean }[]) {
+export function usePlugins(pluginSettings: { name: string; isEnabled: boolean }[]) {
   // takes two params, the key and the function that will be called to get the data
   return useQuery({ queryKey: ['plugins'], queryFn: () => getPlugins(pluginSettings) });
 }
