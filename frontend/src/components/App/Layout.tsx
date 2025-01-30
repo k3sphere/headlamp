@@ -23,7 +23,7 @@ import RouteSwitcher from './RouteSwitcher';
 import TopBar from './TopBar';
 import VersionDialog from './VersionDialog';
 
-export interface LayoutProps { }
+export interface LayoutProps {}
 
 const CLUSTER_FETCH_INTERVAL = 10 * 1000; // ms
 
@@ -96,7 +96,7 @@ function mergeClusterConfigs(
   return mergedClusters;
 }
 
-export default function Layout({ }: LayoutProps) {
+export default function Layout({}: LayoutProps) {
   const arePluginsLoaded = useTypedSelector(state => state.plugins.loaded);
   const dispatch = useDispatch();
   const clusters = useTypedSelector(state => state.config.clusters);
