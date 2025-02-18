@@ -1,6 +1,7 @@
 package kubeconfig
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -306,7 +307,12 @@ func (c *Context) SetupProxy() error {
 	if err == nil {
 		roundTripper, err := makeTransportFor(restConf)
 		if err == nil {
-			proxy.Transport = roundTripper
+			// Create a custom transport to allow self-signed certificates
+			transport := roundTripper.(*http.Transport)
+			transport.TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+			proxy.Transport = transport
 		}
 	}
 
