@@ -1320,7 +1320,8 @@ func (c *HeadlampConfig) getConfig(w http.ResponseWriter, r *http.Request) {
         clusters = append(clusters, Cluster{
             Name:   apiCluster.Name,
             Server: fmt.Sprintf("https://%s.findi.io",apiCluster.Name), // Replace with actual server URL if available
-            Metadata: map[string]interface{}{
+            AuthType: "oidc",
+			Metadata: map[string]interface{}{
                 "extensions": map[string]interface{}{
 					"plugin-catalog": true,
 					"app-catalog":    true,
