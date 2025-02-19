@@ -1316,7 +1316,6 @@ func (c *HeadlampConfig) getConfig(w http.ResponseWriter, r *http.Request) {
 
     // Convert the format
     clusters := []Cluster{}
-	var contexts []kubeconfig.Context
     for _, apiCluster := range apiClusters {
         clusters = append(clusters, Cluster{
             Name:   apiCluster.Name,
