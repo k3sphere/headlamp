@@ -426,20 +426,26 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 		if proxyURL == "" && r.Header.Get("Forward-to") != "" {
 			proxyURL = r.Header.Get("Forward-to")
 		}
+
 		if proxyURL == "" {
 			logger.Log(logger.LevelError, map[string]string{"proxyURL": proxyURL},
 				errors.New("proxy URL is empty"), "proxy URL is empty")
 			http.Error(w, "proxy URL is empty", http.StatusBadRequest)
+
 			return
 		}
+
 		url, err := url.Parse(proxyURL)
 		if err != nil {
 			logger.Log(logger.LevelError, map[string]string{"proxyURL": proxyURL},
 				err, "The provided proxy URL is invalid")
 			http.Error(w, fmt.Sprintf("The provided proxy URL is invalid: %v", err), http.StatusBadRequest)
+
 			return
 		}
+
 		isURLContainedInProxyURLs := false
+
 		for _, proxyURL := range config.proxyURLs {
 			g := glob.MustCompile(proxyURL)
 			if g.Match(url.String()) {
@@ -447,19 +453,24 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 				break
 			}
 		}
+
 		if !isURLContainedInProxyURLs {
 			logger.Log(logger.LevelError, nil, err, "no allowed proxy url match, request denied")
 			http.Error(w, "no allowed proxy url match, request denied ", http.StatusBadRequest)
+
 			return
 		}
 
 		ctx := context.Background()
+
 		proxyReq, err := http.NewRequestWithContext(ctx, r.Method, proxyURL, r.Body)
 		if err != nil {
 			logger.Log(logger.LevelError, nil, err, "creating request")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
+
 		// We may want to filter some headers, otherwise we could just use a shallow copy
 		proxyReq.Header = make(http.Header)
 		for h, val := range r.Header {
@@ -473,40 +484,50 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 		w.Header().Set("X-Accel-Expires", "0")
 
 		client := http.Client{}
+
 		resp, err := client.Do(proxyReq)
 		if err != nil {
 			logger.Log(logger.LevelError, nil, err, "making request")
 			http.Error(w, err.Error(), http.StatusBadGateway)
+
 			return
 		}
+
 		defer resp.Body.Close()
 
 		// Check that the server actually sent compressed data
 		var reader io.ReadCloser
+
 		switch resp.Header.Get("Content-Encoding") {
 		case "gzip":
 			reader, err = gzip.NewReader(resp.Body)
 			if err != nil {
 				logger.Log(logger.LevelError, nil, err, "reading gzip response")
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+
 				return
 			}
 			defer reader.Close()
 		default:
 			reader = resp.Body
 		}
+
 		respBody, err := io.ReadAll(reader)
 		if err != nil {
 			logger.Log(logger.LevelError, nil, err, "reading response")
 			http.Error(w, err.Error(), http.StatusBadGateway)
+
 			return
 		}
+
 		_, err = w.Write(respBody)
 		if err != nil {
 			logger.Log(logger.LevelError, nil, err, "writing response")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
+
 		defer resp.Body.Close()
 	})
 
@@ -596,6 +617,7 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 
 	r.HandleFunc("/oidc-callback", func(w http.ResponseWriter, r *http.Request) {
 		state := r.URL.Query().Get("state")
+
 		decodedState, err := base64.StdEncoding.DecodeString(state)
 		if err != nil {
 			logger.Log(logger.LevelError, nil, err, "failed to decode state")
@@ -603,12 +625,14 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 
 			return
 		}
+
 		if state == "" {
 			logger.Log(logger.LevelError, nil, err, "invalid request state is empty")
 			http.Error(w, "invalid request state is empty", http.StatusBadRequest)
 
 			return
 		}
+
 		//nolint:nestif
 		if oauthConfig, ok := oauthRequestMap[state]; ok {
 			oauth2Token, err := oauthConfig.Config.Exchange(oauthConfig.Ctx, r.URL.Query().Get("code"))
@@ -634,6 +658,7 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 
 				return
 			}
+
 			idToken, err := oauthConfig.Verifier.Verify(oauthConfig.Ctx, rawIDToken)
 			if err != nil {
 				logger.Log(logger.LevelError, nil, err, "failed to verify ID Token")
@@ -641,6 +666,7 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 
 				return
 			}
+
 			resp := struct {
 				OAuth2Token   *oauth2.Token
 				IDTokenClaims *json.RawMessage // ID Token payload is just JSON.
@@ -890,9 +916,11 @@ func (c *HeadlampConfig) OIDCTokenRefreshMiddleware(next http.Handler) http.Hand
 			logger.Log(logger.LevelError, map[string]string{"cluster": cluster},
 				err, "failed to refresh token")
 		}
+
 		if newToken != nil {
 			w.Header().Set("X-Authorization", newToken.AccessToken)
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -970,46 +998,57 @@ func handleClusterHelm(c *HeadlampConfig, router *mux.Router) {
 		// we used nolint:gocognit in this function because...
 		//  Perhaps there's a better way to dispatch these?
 		path := r.URL.Path
+
 		if strings.HasSuffix(path, "/releases/list") && r.Method == http.MethodGet {
 			helmHandler.ListRelease(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/release/install") && r.Method == http.MethodPost {
 			helmHandler.InstallRelease(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/release/history") && r.Method == http.MethodGet {
 			helmHandler.GetReleaseHistory(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/releases/uninstall") && r.Method == http.MethodDelete {
 			helmHandler.UninstallRelease(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/releases/rollback") && r.Method == http.MethodPut {
 			helmHandler.RollbackRelease(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/releases/upgrade") && r.Method == http.MethodPut {
 			helmHandler.UpgradeRelease(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/releases") && r.Method == http.MethodGet {
 			helmHandler.GetRelease(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/repositories") && r.Method == http.MethodGet {
 			helmHandler.ListRepo(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/repositories") && r.Method == http.MethodPost {
 			helmHandler.AddRepo(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/repositories/remove") && r.Method == http.MethodDelete {
 			helmHandler.RemoveRepo(w, r)
 			return
 		}
+
 		if strings.HasSuffix(path, "/repositories/update") && r.Method == http.MethodPut {
 			helmHandler.UpdateRepository(w, r)
 			return
@@ -1119,6 +1158,13 @@ func (c *HeadlampConfig) getClusters() []Cluster {
 
 		// Dynamic clusters should not be visible to other users.
 		if context.Internal {
+			continue
+		}
+
+		// This should not happen, but it's a defensive check.
+		if context.KubeContext == nil {
+			logger.Log(logger.LevelError, map[string]string{"context": context.Name},
+				errors.New("context.KubeContext is nil"), "error adding context")
 			continue
 		}
 
@@ -1703,7 +1749,6 @@ func (c *HeadlampConfig) addClusterSetupRoute(r *mux.Router) {
 /*
 This function is used to handle the node drain request.
 */
-//nolint:funlen
 func (c *HeadlampConfig) handleNodeDrain(w http.ResponseWriter, r *http.Request) {
 	var drainPayload struct {
 		Cluster  string `json:"cluster"`
