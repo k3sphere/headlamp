@@ -1319,7 +1319,7 @@ func (c *HeadlampConfig) getConfig(w http.ResponseWriter, r *http.Request) {
     for _, apiCluster := range apiClusters {
         clusters = append(clusters, Cluster{
             Name:   apiCluster.Name,
-            Server: fmt.Sprintf("https://%s.findi.io",apiCluster.Name), // Replace with actual server URL if available
+            Server: fmt.Sprintf("https://%s.k3sphere.io",apiCluster.Name), // Replace with actual server URL if available
             AuthType: "oidc",
 			Metadata: map[string]interface{}{
                 "extensions": map[string]interface{}{
