@@ -1328,22 +1328,7 @@ func (c *HeadlampConfig) getConfig(w http.ResponseWriter, r *http.Request) {
                 "source":     "kubeconfig",
             },
         })
-		contexts = append(contexts, kubeconfig.Context{
-			Name: apiCluster.Name,
-			Cluster: &api.Cluster{
-				Server: fmt.Sprintf("https://%s.findi.io", apiCluster.Name),
-				CertificateAuthorityData: []byte(apiCluster.PublicKey),
-				InsecureSkipTLSVerify: true,
-			},
-			OidcConf: &kubeconfig.OidcConfig{
-				ClientID:     apiCluster.ID,
-				IdpIssuerURL: "https://auth.k3sphere.com/realms/k3sphere",
-			},
-		})
     }
-	if len(contexts) > 0 {
-		c.addContextsToStore(contexts, nil)
-	}
     clientConfig := clientConfig{
         Clusters:                clusters,
         IsDyanmicClusterEnabled: c.enableDynamicClusters,
