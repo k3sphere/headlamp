@@ -84,10 +84,10 @@ RUN if command -v apt-get > /dev/null; then \
         addgroup -S headlamp && adduser -S headlamp -G headlamp; \
     fi
 
-COPY --from=backend-build --link /headlamp/backend/headlamp-server /headlamp/headlamp-server
-COPY --from=frontend --link /headlamp/frontend/build /headlamp/frontend
-COPY --from=frontend --link /headlamp/plugins /headlamp/plugins
-COPY --from=static-plugins --link /plugins /headlamp/static-plugins
+COPY --from=backend-build /headlamp/backend/headlamp-server /headlamp/headlamp-server
+COPY --from=frontend /headlamp/frontend/build /headlamp/frontend
+COPY --from=frontend /headlamp/plugins /headlamp/plugins
+COPY --from=static-plugins /plugins /headlamp/static-plugins
 
 RUN chown -R headlamp:headlamp /headlamp
 USER headlamp
