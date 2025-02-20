@@ -5,7 +5,7 @@ on:
   # Automatically trigger it when detected changes in repo
   push:
     branches: 
-      [ main ]
+      [ release/* ]
     paths:
     - '**'
     - '.github/workflows/headlamp-AutoDeployTrigger-a8463c94-a7df-4e1c-accf-7b5d674334fe.yml'
