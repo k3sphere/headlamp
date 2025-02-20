@@ -1274,67 +1274,7 @@ func parseClusterFromKubeConfig(kubeConfigs []string) ([]Cluster, []error) {
 func (c *HeadlampConfig) getConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-    // Call the external API to get clusters
-    apiURL := "https://k3sphere.com/api/cluster"
-    req, err := http.NewRequest("GET", apiURL, nil)
-	for _, cookie := range r.Cookies() {
-		if cookie.Name == "authjs.session-token" {
-			req.AddCookie(cookie)
-		}
-	}
-    if err != nil {
-        logger.Log(logger.LevelError, nil, err, "creating request to external API")
-        http.Error(w, "failed to create request", http.StatusInternalServerError)
-        return
-    }
-
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        logger.Log(logger.LevelError, nil, err, "calling external API")
-        http.Error(w, "failed to call external API", http.StatusInternalServerError)
-        return
-    }
-    defer resp.Body.Close()
-
-    if resp.StatusCode != http.StatusOK {
-        http.Error(w, "failed to get clusters from external API", resp.StatusCode)
-        return
-    }
-
-    var apiClusters []struct {
-        ID       string `json:"id"`
-        Name     string `json:"name"`
-        Location string `json:"location"`
-		PublicKey string `json:"publicKey"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&apiClusters); err != nil {
-        logger.Log(logger.LevelError, nil, err, "decoding response from external API")
-        http.Error(w, "failed to decode response", http.StatusInternalServerError)
-        return
-    }
-
-    // Convert the format
-    clusters := []Cluster{}
-    for _, apiCluster := range apiClusters {
-        clusters = append(clusters, Cluster{
-            Name:   apiCluster.Name,
-            Server: fmt.Sprintf("https://%s.k3sphere.io",apiCluster.Name), // Replace with actual server URL if available
-            AuthType: "oidc",
-			Metadata: map[string]interface{}{
-                "extensions": map[string]interface{}{
-					"plugin-catalog": true,
-					"app-catalog":    true,
-				},
-                "namespace":  "",
-                "source":     "kubeconfig",
-            },
-        })
-    }
-    clientConfig := clientConfig{
-        Clusters:                clusters,
-        IsDyanmicClusterEnabled: c.enableDynamicClusters,
-    }
+	clientConfig := clientConfig{c.getClusters(), c.enableDynamicClusters}
 
 	if err := json.NewEncoder(w).Encode(&clientConfig); err != nil {
 		logger.Log(logger.LevelError, nil, err, "encoding config")
