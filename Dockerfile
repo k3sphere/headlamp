@@ -3,7 +3,7 @@
 ARG IMAGE_BASE=alpine:3.20.4@sha256:780405de0f7cf99f985dd5a4f04dfc5aae71509d89505c1ba48a88d95a0ceb7f
 FROM ${IMAGE_BASE} as image-base
 
-FROM golang:1.24@sha256:2b1cbf278ce05a2a310a3d695ebb176420117a8cfcfcc4e5e68a1bef5f6354da as backend-build
+FROM --platform=${BUILDPLATFORM} golang:1.24@sha256:2b1cbf278ce05a2a310a3d695ebb176420117a8cfcfcc4e5e68a1bef5f6354da as backend-build
 
 WORKDIR /headlamp
 
@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     cd ./backend && go build -o ./headlamp-server ./cmd/
 
-FROM node:18@sha256:d0bbfdbad0bff8253e6159dcbee42141db4fc309365d5b8bcfce46ed71569078 as frontend-build
+FROM --platform=${BUILDPLATFORM} node:18@sha256:d0bbfdbad0bff8253e6159dcbee42141db4fc309365d5b8bcfce46ed71569078 as frontend-build
 
 # We need .git and app/ in order to get the version and git version for the frontend/.env file
 # that's generated when building the frontend.
@@ -64,7 +64,7 @@ RUN for i in $(find ./plugins-old/*/main.js); do plugin_name=$(echo $i|cut -d'/'
 RUN for i in $(find ./plugins-old/*/package.json); do plugin_name=$(echo $i|cut -d'/' -f3); mkdir -p plugins/$plugin_name; cp $i plugins/$plugin_name; done
 
 # Static (officially shipped) plugins
-FROM frontend-build as static-plugins
+FROM --platform=${BUILDPLATFORM} frontend-build as static-plugins
 RUN apt-get update && apt-get install -y jq
 COPY ./container/build-manifest.json ./container/fetch-plugins.sh /tools/
 
@@ -84,10 +84,10 @@ RUN if command -v apt-get > /dev/null; then \
         addgroup -S headlamp && adduser -S headlamp -G headlamp; \
     fi
 
-COPY --from=backend-build /headlamp/backend/headlamp-server /headlamp/headlamp-server
-COPY --from=frontend /headlamp/frontend/build /headlamp/frontend
-COPY --from=frontend /headlamp/plugins /headlamp/plugins
-COPY --from=static-plugins /plugins /headlamp/static-plugins
+COPY --from=backend-build --link /headlamp/backend/headlamp-server /headlamp/headlamp-server
+COPY --from=frontend --link /headlamp/frontend/build /headlamp/frontend
+COPY --from=frontend --link /headlamp/plugins /headlamp/plugins
+COPY --from=static-plugins --link /plugins /headlamp/static-plugins
 
 RUN chown -R headlamp:headlamp /headlamp
 USER headlamp
