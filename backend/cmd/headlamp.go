@@ -576,13 +576,13 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 		}
 
 		oidcConfig := &oidc.Config{
-			ClientID: oidcAuthConfig.ClientID,
+			ClientID: cluster,
 		}
 
 		verifier := provider.Verifier(oidcConfig)
 		oauthConfig := &oauth2.Config{
-			ClientID:     oidcAuthConfig.ClientID,
-			ClientSecret: oidcAuthConfig.ClientSecret,
+			ClientID:     cluster,
+			// ClientSecret: oidcAuthConfig.ClientSecret,
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  getOidcCallbackURL(r, config),
 			Scopes:       append([]string{oidc.ScopeOpenID}, oidcAuthConfig.Scopes...),
@@ -1318,7 +1318,7 @@ func (c *HeadlampConfig) getConfig(w http.ResponseWriter, r *http.Request) {
     clusters := []Cluster{}
     for _, apiCluster := range apiClusters {
         clusters = append(clusters, Cluster{
-            Name:   apiCluster.Name,
+            Name:   apiCluster.ID,
             Server: fmt.Sprintf("https://%s.findi.io",apiCluster.Name), // Replace with actual server URL if available
             AuthType: "oidc",
 			Metadata: map[string]interface{}{
