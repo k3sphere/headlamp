@@ -576,13 +576,13 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 		}
 
 		oidcConfig := &oidc.Config{
-			ClientID: cluster,
+			ClientID: oidcAuthConfig.ClientID,
 		}
 
 		verifier := provider.Verifier(oidcConfig)
 		oauthConfig := &oauth2.Config{
-			ClientID:     cluster,
-			// ClientSecret: oidcAuthConfig.ClientSecret,
+			ClientID:     oidcAuthConfig.ClientID,
+			ClientSecret: oidcAuthConfig.ClientSecret,
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  getOidcCallbackURL(r, config),
 			Scopes:       append([]string{oidc.ScopeOpenID}, oidcAuthConfig.Scopes...),
@@ -634,6 +634,7 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 
 		//nolint:nestif
 		if oauthConfig, ok := oauthRequestMap[state]; ok {
+			logger.Log(logger.LevelInfo, nil, nil, fmt.Sprintf("invalid request state is empty %v", oauthConfig))
 			oauth2Token, err := oauthConfig.Config.Exchange(oauthConfig.Ctx, r.URL.Query().Get("code"))
 			if err != nil {
 				logger.Log(logger.LevelError, nil, err, "failed to exchange token")
@@ -1318,7 +1319,7 @@ func (c *HeadlampConfig) getConfig(w http.ResponseWriter, r *http.Request) {
     clusters := []Cluster{}
     for _, apiCluster := range apiClusters {
         clusters = append(clusters, Cluster{
-            Name:   apiCluster.ID,
+            Name:   apiCluster.Name,
             Server: fmt.Sprintf("https://%s.findi.io",apiCluster.Name), // Replace with actual server URL if available
             AuthType: "oidc",
 			Metadata: map[string]interface{}{
